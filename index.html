@@ -1,154 +1,66 @@
-const stations = [
-  // ============================
-  // Львів — великі мережі
-  // ============================
-  {
-    name: "Forum Lviv Mall Charging",
-    lat: 49.84049,
-    lng: 24.03008,
-    operator: "GO TO-U (LGI)",
-    types: ["CCS2", "CHAdeMO", "Type2"]
-  },
-  {
-    name: "King Cross Leopolis Mall Station 1",
-    lat: 49.79480,
-    lng: 24.02334,
-    operator: "GO TO-U (LGI)",
-    types: ["CCS2", "CHAdeMO", "Type2"]
-  },
-  {
-    name: "Victoria Gardens Mall Charging",
-    lat: 49.81650,
-    lng: 24.03130,
-    operator: "GO TO-U (LGI)",
-    types: ["CCS2", "CHAdeMO", "Type2"]
-  },
-  {
-    name: "Arsen Supermarket EV Charger",
-    lat: 49.80790,
-    lng: 24.03900,
-    operator: "GO TO-U (LGI)",
-    types: ["CCS2", "CHAdeMO", "Type2"]
-  },
-  {
-    name: "Spartak Mall EV Charger",
-    lat: 49.82470,
-    lng: 24.01780,
-    operator: "GO TO-U (LGI)",
-    types: ["CCS2", "CHAdeMO", "Type2"]
-  },
-  {
-    name: "LGI EV Charger – Pid Dubom St",
-    lat: 49.84170,
-    lng: 24.03090,
-    operator: "GO TO-U (LGI)",
-    types: ["CCS2", "Type2"]
-  },
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>EV Map Lviv</title>
 
-  // ============================
-  // Регіональні / великі мережі
-  // ============================
-  {
-    name: "YASNO EV Station – Lviv",
-    lat: 49.85010,
-    lng: 24.02030,
-    operator: "YASNO E-mobility",
-    types: ["CCS2", "Type2"]
-  },
-  {
-    name: "AutoEnterprise – Shevchenko Ave",
-    lat: 49.83610,
-    lng: 24.01950,
-    operator: "AutoEnterprise",
-    types: ["CCS2", "Type2"]
-  },
-  {
-    name: "AutoEnterprise – Horodotska 288",
-    lat: 49.81150,
-    lng: 24.00670,
-    operator: "AutoEnterprise",
-    types: ["CCS2", "Type2"]
-  },
-  {
-    name: "EcoFactor EV Charger – Lviv",
-    lat: 49.85020,
-    lng: 24.02370,
-    operator: "EcoFactor",
-    types: ["CCS2", "Type2"]
-  },
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  // ============================
-  // АЗС з зарядками (OKKO, WOG, SOCAR)
-  // ============================
-  {
-    name: "OKKO EV Charger – Lviv North",
-    lat: 49.87010,
-    lng: 24.03450,
-    operator: "OKKO",
-    types: ["CCS2", "Type2"]
-  },
-  {
-    name: "OKKO EV Charger – Chornovola",
-    lat: 49.86170,
-    lng: 24.01950,
-    operator: "OKKO",
-    types: ["CCS2", "Type2"]
-  },
-  {
-    name: "WOG EV Charging – Kulparkivska",
-    lat: 49.82220,
-    lng: 23.97390,
-    operator: "WOG",
-    types: ["CCS2", "Type2"]
-  },
-  {
-    name: "WOG EV Charging – Naukova",
-    lat: 49.80590,
-    lng: 23.98720,
-    operator: "WOG",
-    types: ["CCS2", "Type2"]
-  },
-  {
-    name: "SOCAR EV Charger – Lviv Central",
-    lat: 49.84000,
-    lng: 24.02500,
-    operator: "SOCAR",
-    types: ["CCS2", "Type2"]
-  },
+<style>
+  html, body { margin:0; padding:0; }
+  #map { height:100vh; }
+</style>
+</head>
 
-  // ============================
-  // Tesla (Destination/Supercharger)
-  // ============================
-  {
-    name: "Tesla Destination Charger – Leopolis Hotel",
-    lat: 49.84070,
-    lng: 24.03050,
-    operator: "Tesla",
-    types: ["Tesla"]
-  },
-  {
-    name: "Tesla Destination Charger – Grand Hotel",
-    lat: 49.83490,
-    lng: 24.02010,
-    operator: "Tesla",
-    types: ["Tesla"]
-  },
+<body>
+<div id="map"></div>
 
-  // ============================
-  // Околиця — популярні точки
-  // ============================
-  {
-    name: "Briukhovychi EV Charger – Ivasyuka 74",
-    lat: 49.90840,
-    lng: 23.98420,
-    operator: "Local EV Station",
-    types: ["CCS2", "Type2"]
-  },
-  {
-    name: "Sokilnyky EV Charging – Stryiska St",
-    lat: 49.78120,
-    lng: 23.97030,
-    operator: "Local EV Station",
-    types: ["CCS2", "Type2"]
-  },
-];
+<script>
+
+const map = L.map('map').setView([49.8397, 24.0297], 11);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
+
+
+// 🔥 ЗАПИТ ДО OPENCHARGEMAP
+fetch("https://api.openchargemap.io/v3/poi/?output=json&countrycode=UA&latitude=49.8397&longitude=24.0297&distance=70&distanceunit=KM&maxresults=1000")
+.then(response => response.json())
+.then(data => {
+
+  console.log("Знайдено станцій:", data.length);
+
+  data.forEach(station => {
+
+    if (!station.AddressInfo) return;
+
+    const lat = station.AddressInfo.Latitude;
+    const lng = station.AddressInfo.Longitude;
+    const name = station.AddressInfo.Title || "EV Station";
+
+    let types = "";
+    if (station.Connections) {
+      types = station.Connections.map(c => c.ConnectionType?.Title).join(", ");
+    }
+
+    L.marker([lat, lng])
+      .addTo(map)
+      .bindPopup(
+        "<b>" + name + "</b><br>" +
+        (station.AddressInfo.AddressLine1 || "") + "<br>" +
+        "<small>" + types + "</small>"
+      );
+  });
+
+})
+.catch(error => {
+  console.error("Помилка API:", error);
+  alert("Не вдалося завантажити станції.");
+});
+
+</script>
+
+</body>
+</html>
