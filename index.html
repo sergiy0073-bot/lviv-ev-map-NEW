@@ -30,7 +30,8 @@
   }).addTo(map);
 
   // 🔋 Отримання всіх станцій в радіусі 25 км
-  fetch(`https://api.openchargemap.io/v3/poi/?output=json&countrycode=UA&latitude=${cityLat}&longitude=${cityLng}&distance=25&distanceunit=KM&maxresults=200`)
+  fetch(`https://corsproxy.io/?https://api.openchargemap.io/v3/poi/?output=json&countrycode=UA&latitude=${cityLat}&longitude=${cityLng}&distance=25&distanceunit=KM&maxresults=200`)
+
     .then(response => response.json())
     .then(data => {
 
