@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Test Station Lviv Center",
+    "lat": 49.8397,
+    "lng": 24.0297,
+    "operator": "Test",
+    "types": ["CCS2", "Type2"]
+  }
+]
