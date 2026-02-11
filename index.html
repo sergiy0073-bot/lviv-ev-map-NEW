@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Test Map</title>
+<title>EV Map Lviv</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -25,17 +25,42 @@ html, body {
 
 <script>
 
-const map = L.map('map').setView([49.8397, 24.0297], 12);
+const map = L.map('map').setView([49.8397, 24.0297], 11);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
-// тестовий маркер
-L.marker([49.8397, 24.0297])
-  .addTo(map)
-  .bindPopup("Львів центр")
-  .openPopup();
+
+// 🔥 Безпечне завантаження stations.json
+fetch("stations.json")
+  .then(res => res.json())
+  .then(stations => {
+
+    console.log("Станцій:", stations.length);
+
+    stations.forEach(s => {
+
+      if (!s.lat || !s.lng) return;
+
+      L.marker([s.lat, s.lng])
+        .addTo(map)
+        .bindPopup(`
+          <b>${s.name}</b><br>
+          Оператор: ${s.operator}<br>
+          Типи: ${s.types.join(", ")}
+        `);
+
+    });
+
+  })
+  .catch(err => {
+    console.log("JSON не завантажився — показуємо тестову точку");
+    
+    L.marker([49.8397, 24.0297])
+      .addTo(map)
+      .bindPopup("JSON не знайдено");
+  });
 
 </script>
 
