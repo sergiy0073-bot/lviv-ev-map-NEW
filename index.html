@@ -2,19 +2,20 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>EV Map Lviv</title>
+<title>Test Map</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
-  html, body {
-    margin: 0;
-    padding: 0;
-  }
-  #map {
-    height: 100vh;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+#map {
+  height: 100%;
+}
 </style>
 </head>
 
@@ -24,10 +25,19 @@
 
 <script>
 
-// ==========================
-// 1️⃣ Ініціалізація карти
-// ==========================
+const map = L.map('map').setView([49.8397, 24.0297], 12);
 
-const map = L.map('map').setView([49.8397, 24.0297], 11);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors'
+}).addTo(map);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+// тестовий маркер
+L.marker([49.8397, 24.0297])
+  .addTo(map)
+  .bindPopup("Львів центр")
+  .openPopup();
+
+</script>
+
+</body>
+</html>
