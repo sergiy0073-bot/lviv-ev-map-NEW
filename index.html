@@ -18,8 +18,9 @@
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <script>
-  // 📍 Центр Львова
   const cityLat = 49.8397;
   const cityLng = 24.0297;
 
@@ -29,35 +30,42 @@
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
 
-  // 🔋 Отримання всіх станцій в радіусі 25 км
-  fetch(`https://corsproxy.io/?https://api.openchargemap.io/v3/poi/?output=json&countrycode=UA&latitude=${cityLat}&longitude=${cityLng}&distance=25&distanceunit=KM&maxresults=200`)
+  // Overpass API запит для всіх зарядних станцій у Львові
+  const query = `
+    [out:json];
+    node
+      ["amenity"="charging_station"]
+      (49.70,23.90,49.95,24.20);
+    out;
+  `;
 
-    .then(response => response.json())
-    .then(data => {
+  fetch("https://overpass-api.de/api/interpreter", {
+    method: "POST",
+    body: query
+  })
+  .then(res => res.json())
+  .then(data => {
 
-      data.forEach(station => {
+    data.elements.forEach(station => {
 
-        if (!station.AddressInfo) return;
+      const lat = station.lat;
+      const lon = station.lon;
 
-        const lat = station.AddressInfo.Latitude;
-        const lng = station.AddressInfo.Longitude;
+      const name = station.tags.name || "Зарядна станція";
+      const operator = station.tags.operator || "Невідомий оператор";
 
-        const title = station.AddressInfo.Title || "Без назви";
-        const address = station.AddressInfo.AddressLine1 || "";
-        const operator = station.OperatorInfo ? station.OperatorInfo.Title : "Невідомий";
+      L.marker([lat, lon])
+        .addTo(map)
+        .bindPopup(`
+          <b>${name}</b><br>
+          Оператор: ${operator}
+        `);
+    });
 
-        L.marker([lat, lng])
-          .addTo(map)
-          .bindPopup(`
-            <b>${title}</b><br>
-            ${address}<br>
-            Оператор: ${operator}
-          `);
-      });
-
-    })
-    .catch(error => console.error(error));
+  })
+  .catch(err => console.error(err));
 </script>
+
 
 </body>
 </html>
