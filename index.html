@@ -2,65 +2,139 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>EV Map Lviv</title>
+<title>EV Stations Lviv +70km</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="manifest" href="manifest.json">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css"/>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
 <style>
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
+body { margin:0; font-family: Arial; }
+#map { height: 90vh; }
+#info {
+    padding:10px;
+    background:#111;
+    color:white;
 }
-#map {
-  height: 100%;
+button {
+    padding:6px 10px;
+    margin-left:10px;
 }
 </style>
 </head>
 
 <body>
 
+<div id="info">
+Станції від 7 kW | Знайдено: <span id="count">0</span>
+<button onclick="locateMe()">📍 Моє місце</button>
+</div>
+
 <div id="map"></div>
 
 <script>
 
-const map = L.map('map').setView([49.8397, 24.0297], 11);
+// --- НАЛАШТУВАННЯ ---
+const minPowerKW = 7;
+const latitude = 49.8397;
+const longitude = 24.0297;
+const radiusKm = 70;
+
+// --- КАРТА ---
+const map = L.map('map').setView([latitude, longitude], 10);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
+    attribution: '&copy; OpenStreetMap'
 }).addTo(map);
 
+// --- КЛАСТЕР ---
+const markers = L.markerClusterGroup();
+map.addLayer(markers);
 
-// 🔥 Безпечне завантаження stations.json
-fetch("stations.json")
-  .then(res => res.json())
-  .then(stations => {
+// --- ІКОНКИ ---
+function getIcon(power){
+    if(power >= 50){
+        return L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/1048/1048314.png',
+            iconSize: [30,30]
+        });
+    } else {
+        return L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3103/3103446.png',
+            iconSize: [25,25]
+        });
+    }
+}
 
-    console.log("Станцій:", stations.length);
+// --- ЗАПИТ ---
+const apiKey = "YOUR_API_KEY";
 
-    stations.forEach(s => {
+const url = `https://api.openchargemap.io/v3/poi/?output=json
+&latitude=${latitude}
+&longitude=${longitude}
+&distance=${radiusKm}
+&distanceunit=KM
+&maxresults=1000
+&key=${apiKey}`;
 
-      if (!s.lat || !s.lng) return;
+fetch(url)
+.then(res => res.json())
+.then(data => {
 
-      L.marker([s.lat, s.lng])
-        .addTo(map)
-        .bindPopup(`
-          <b>${s.name}</b><br>
-          Оператор: ${s.operator}<br>
-          Типи: ${s.types.join(", ")}
-        `);
+    let count = 0;
 
+    data.forEach(station => {
+
+        if(station.Connections){
+            station.Connections.forEach(conn => {
+
+                const power = conn.PowerKW || 0;
+
+                if(power >= minPowerKW){
+
+                    const marker = L.marker(
+                        [station.AddressInfo.Latitude, station.AddressInfo.Longitude],
+                        { icon: getIcon(power) }
+                    );
+
+                    marker.bindPopup(`
+                        <b>${station.AddressInfo.Title}</b><br>
+                        Потужність: ${power} kW<br>
+                        Адреса: ${station.AddressInfo.AddressLine1 || ''}
+                    `);
+
+                    markers.addLayer(marker);
+                    count++;
+                }
+            });
+        }
     });
 
-  })
-  .catch(err => {
-    console.log("JSON не завантажився — показуємо тестову точку");
-    
-    L.marker([49.8397, 24.0297])
-      .addTo(map)
-      .bindPopup("JSON не знайдено");
-  });
+    document.getElementById("count").innerText = count;
+});
+
+// --- АВТОЛОКАЦІЯ ---
+function locateMe(){
+    map.locate({setView:true, maxZoom:13});
+}
+
+map.on('locationfound', function(e){
+    L.marker(e.latlng).addTo(map)
+    .bindPopup("Ви тут")
+    .openPopup();
+});
+
+// --- PWA ---
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js');
+}
 
 </script>
 
